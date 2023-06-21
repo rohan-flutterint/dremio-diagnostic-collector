@@ -2,10 +2,9 @@
 
 ### Dependency
 
-1. Recent verision of Docker up and running
-2. Access to the dremio-ee Docker image
-3. Log into docker using the [docker login](https://docs.docker.com/engine/reference/commandline/login/) command
-4. Pull down dremio-ee with the following command before running any tests `docker pull dremio/dremio-ee:24.0`
+1. 1 coordinator node and 1 executor node to collect from via ssh, need to have public key auth setup
+2. kubectl access to a kubernetes cluster that can be used for testing
+3. copy default-test.json to root directory and name it test.json
 
 ### Scripts
 
