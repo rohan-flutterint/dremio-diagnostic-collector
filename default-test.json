@@ -1,0 +1,8 @@
+{
+    "kube": {
+        "namespace": ""
+    },
+    "ssh": {
+        "servers": []
+    }
+}
