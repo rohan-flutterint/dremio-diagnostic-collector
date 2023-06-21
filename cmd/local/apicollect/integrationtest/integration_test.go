@@ -25,7 +25,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -35,6 +34,7 @@ import (
 	"github.com/dremio/dremio-diagnostic-collector/cmd/local/conf"
 	"github.com/dremio/dremio-diagnostic-collector/cmd/local/ddcio"
 	"github.com/dremio/dremio-diagnostic-collector/pkg/simplelog"
+	"github.com/dremio/dremio-diagnostic-collector/pkg/tests"
 	"github.com/spf13/pflag"
 )
 
@@ -97,56 +97,25 @@ node-metrics-collect-duration-seconds: 10
 	}
 	return testDDCYaml
 }
-func GetRootProjectDir() (string, error) {
-	cmd := exec.Command("go", "list", "-m", "-f", "{{.Dir}}")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", err
-	}
-
-	rootDir := strings.TrimSpace(string(output))
-	return rootDir, nil
-}
-
-var rootDir string
 
 func TestMain(m *testing.M) {
 	simplelog.InitLogger(4)
 	exitCode := func() (exitCode int) {
 		var err error
-		rootDir, err = GetRootProjectDir()
-		if err != nil {
-			log.Fatal(err)
-		}
-		if err := ddcio.CopyFile(filepath.Join("testdata", "conf", "dremio.conf"), filepath.Join(rootDir, "server-install", "conf", "dremio.conf")); err != nil {
-			log.Fatal(err)
-		}
-		dremioExec := filepath.Join(rootDir, "server-install", "bin", "dremio")
-		cmd := exec.Command(dremioExec, "start")
-		// Attach to standard output and error
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		// Start the process
-		if err := cmd.Start(); err != nil {
-			log.Fatal(err)
-		}
+		ns, err := tests.SetupDremioK8STestEnv()
 
 		fmt.Println("sleeping 60 seconds so that dremio can start")
 		time.Sleep(60 * time.Second)
 
 		defer func() {
 			//send shutdown
-			shutdownCmd := exec.Command(dremioExec, "stop")
-			// Attach to standard output and error
-			shutdownCmd.Stdout = os.Stdout
-			shutdownCmd.Stderr = os.Stderr
-			// Start the process
-			if err := shutdownCmd.Start(); err != nil {
-				log.Print(err)
+			if err := tests.TeardownDremioK8sTestEnv(ns); err != nil {
+				simplelog.Warnf("unable to teardown k8s resources %v", err)
 			}
 		}()
 
-		dremioTestPort := 9047
+		dremioTestPort := 12831
+		tests.PortForwardToLocal(9047, dremioTestPort)
 		if err := os.RemoveAll(filepath.Join("/tmp", "dremio-source")); err != nil {
 			log.Printf("unable to remove dremio-source do to error %v", err)
 		}

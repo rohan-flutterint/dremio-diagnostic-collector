@@ -1,6 +1,6 @@
 {
     "kube": {
-        "namespace": ""
+        "context": ""
     },
     "ssh": {
         "servers": []

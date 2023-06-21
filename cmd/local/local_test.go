@@ -57,6 +57,7 @@ node-metrics-collect-duration-seconds: 10
 	}
 	return testDDCYaml
 }
+
 func TestCaptureSystemMetrics(t *testing.T) {
 	tmpDirForConf, err := os.MkdirTemp("", "ddc")
 	if err != nil {
